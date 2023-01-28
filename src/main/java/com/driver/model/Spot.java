@@ -4,6 +4,7 @@ package com.driver.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -30,7 +31,7 @@ public class Spot {
     //ReservationList
     @OneToMany(mappedBy = "spot",cascade = CascadeType.ALL)
     @JsonIgnoreProperties("spot")
-    private List<Reservation> reservationList;
+    private List<Reservation> reservationList = new ArrayList<>();
 
     public Spot() {
     }

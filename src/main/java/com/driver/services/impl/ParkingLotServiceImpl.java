@@ -9,6 +9,8 @@ import com.driver.services.ParkingLotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ParkingLotServiceImpl implements ParkingLotService {
     @Autowired
@@ -17,7 +19,9 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     SpotRepository spotRepository1;
     @Override
     public ParkingLot addParkingLot(String name, String address) {
-        ParkingLot parkingLot = new ParkingLot(name,address);
+        ParkingLot parkingLot = new ParkingLot();
+        parkingLot.setName(name);
+        parkingLot.setAddress(address);
         parkingLotRepository1.save(parkingLot);
         return parkingLot;
     }
@@ -33,10 +37,10 @@ public class ParkingLotServiceImpl implements ParkingLotService {
             spot.setPricePerHour(pricePerHour);
             spot.setOccupied(false);
 
-            if(numberOfWheels==2){
+            if(numberOfWheels<=2){
                 spot.setSpotType(SpotType.TWO_WHEELER);
             }
-            else if(numberOfWheels==4){
+            else if(numberOfWheels<=4){
                 spot.setSpotType(SpotType.FOUR_WHEELER);
             }
             else {
@@ -57,15 +61,14 @@ public class ParkingLotServiceImpl implements ParkingLotService {
 
     @Override
     public void deleteSpot(int spotId) {
-        Spot spot = spotRepository1.findById(spotId).get();
-        spot.getParkingLot().getSpotList().remove(spot);
-        parkingLotRepository1.save(spot.getParkingLot());
         spotRepository1.deleteById(spotId);
     }
 
     @Override
     public Spot updateSpot(int parkingLotId, int spotId, int pricePerHour) {
+        ParkingLot parkingLot = parkingLotRepository1.findById(parkingLotId).get();
         Spot spot = spotRepository1.findById(spotId).get();
+
         spot.setPricePerHour(pricePerHour);
 
         spotRepository1.save(spot);
