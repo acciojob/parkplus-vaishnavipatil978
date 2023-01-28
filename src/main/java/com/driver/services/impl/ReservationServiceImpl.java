@@ -9,6 +9,7 @@ import com.driver.services.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,5 +25,70 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation reserveSpot(Integer userId, Integer parkingLotId, Integer timeInHours, Integer numberOfWheels) throws Exception {
 
+        if(!userRepository3.findById(userId).isPresent()) throw new Exception("Cannot make reservation");
+
+        User user = userRepository3.findById(userId).get();
+
+        if(!parkingLotRepository3.findById(parkingLotId).isPresent()) throw new Exception("Cannot make reservation");
+
+        ParkingLot parkingLot = parkingLotRepository3.findById(parkingLotId).get();
+
+        Spot spot = findSpot(parkingLot.getSpotList(),numberOfWheels);
+
+        if(spot==null) throw new Exception("Cannot make reservation");
+
+        Reservation reservation = new Reservation();
+        reservation.setNumberOfHours(timeInHours);
+        reservation.setUser(user);
+        reservation.setSpot(spot);
+
+        reservationRepository3.save(reservation);
+
+        spot.setOccupied(true);
+        spot.getReservationList().add(reservation);
+
+        user.getReservationList().add(reservation);
+
+        spotRepository3.save(spot);
+        userRepository3.save(user);
+
+        return reservation;
+    }
+
+    public Spot findSpot(List<Spot> spotList, int numberOfWheels){
+        try {
+            Spot ReservedSpot = null;
+            List<Spot> availableSpots = new ArrayList<>();
+            int lowestPrice = Integer.MAX_VALUE;
+
+            for(Spot spot:spotList){
+                if(!spot.isOccupied()) {
+
+                    if (numberOfWheels>4 && spot.getSpotType().equals(SpotType.OTHERS)) {
+                        availableSpots.add(spot);
+                    }
+                    else if ((numberOfWheels > 2 && numberOfWheels <= 4) && (spot.getSpotType().equals(SpotType.FOUR_WHEELER) || spot.getSpotType().equals(SpotType.OTHERS))) {
+                        availableSpots.add(spot);
+                    }
+                    else if(numberOfWheels<=2) {
+                        availableSpots.add(spot);
+                    }
+                }
+            }
+
+            if(availableSpots.size()==0) return null;
+
+            for(Spot spot:availableSpots){
+                if(spot.getPricePerHour()<lowestPrice){
+                    ReservedSpot = spot;
+                    lowestPrice=spot.getPricePerHour();
+                }
+            }
+
+            return ReservedSpot;
+        }
+        catch (Exception e){
+            return null;
+        }
     }
 }
