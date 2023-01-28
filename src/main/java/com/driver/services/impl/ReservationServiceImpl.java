@@ -25,38 +25,42 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation reserveSpot(Integer userId, Integer parkingLotId, Integer timeInHours, Integer numberOfWheels) throws Exception {
 
-        if(!userRepository3.findById(userId).isPresent()){
+        try {
+            if (!userRepository3.findById(userId).isPresent()) {
+                //return null;
+                throw new Exception("Cannot make reservation");
+            }
+
+            User user = userRepository3.findById(userId).get();
+
+            if (!parkingLotRepository3.findById(parkingLotId).isPresent()) {
+                //return null;
+                throw new Exception("Cannot make reservation");
+            }
+
+            ParkingLot parkingLot = parkingLotRepository3.findById(parkingLotId).get();
+
+            Spot spot = findSpot(parkingLot.getSpotList(), numberOfWheels);
+
+            if (spot == null) throw new Exception("Cannot make reservation");
+
+            Reservation reservation = new Reservation();
+            reservation.setNumberOfHours(timeInHours);
+            reservation.setUser(user);
+            reservation.setSpot(spot);
+
+            spot.setOccupied(true);
+            spot.getReservationList().add(reservation);
+
+            user.getReservationList().add(reservation);
+
+            userRepository3.save(user);
+
+            return reservation;
+        }
+        catch(Exception e){
             return null;
-            //throw new Exception("Cannot make reservation");
         }
-
-        User user = userRepository3.findById(userId).get();
-
-        if(!parkingLotRepository3.findById(parkingLotId).isPresent()){
-           return null;
-            // throw new Exception("Cannot make reservation");
-        }
-
-        ParkingLot parkingLot = parkingLotRepository3.findById(parkingLotId).get();
-
-        Spot spot = findSpot(parkingLot.getSpotList(),numberOfWheels);
-
-        if(spot==null) throw new Exception("Cannot make reservation");
-
-        Reservation reservation = new Reservation();
-        reservation.setNumberOfHours(timeInHours);
-        reservation.setUser(user);
-        reservation.setSpot(spot);
-
-        spot.setOccupied(true);
-        spot.getReservationList().add(reservation);
-
-        user.getReservationList().add(reservation);
-
-        spotRepository3.save(spot);
-        userRepository3.save(user);
-
-        return reservation;
     }
 
     public Spot findSpot(List<Spot> spotList, int numberOfWheels){
